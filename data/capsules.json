@@ -1,0 +1,91 @@
+[
+  {
+    "id": 1,
+    "title": "Title",
+    "message": "Long message",
+    "color": "#FFFFFF",
+    "unlockDate": "2025-02-25T17:00",
+    "category": "Event",
+    "dateCreated": "2025-02-18T12:49:46.988214600",
+    "isOpened": false,
+    "isDeleted": false
+  },
+  {
+    "id": 2,
+    "title": "Future Reminder",
+    "message": "This is a reminder for something important.",
+    "color": "#9B59B6",
+    "unlockDate": "2025-06-15T10:30",
+    "category": "Reminder",
+    "dateCreated": "2025-02-20T14:12:30.123456",
+    "isOpened": false,
+    "isDeleted": false
+  },
+  {
+    "id": 3,
+    "title": "New Year Reflection",
+    "message": "A message to my future self about this year\u0027s goals.",
+    "color": "#1ABC9C",
+    "unlockDate": "2026-01-01T00:00",
+    "category": "Reflection",
+    "dateCreated": "2025-02-19T08:45:20.654321",
+    "isOpened": false,
+    "isDeleted": false
+  },
+  {
+    "id": 4,
+    "title": "Hidden Surprise",
+    "message": "You will be surprised when you open this!",
+    "color": "#2ECC71",
+    "unlockDate": "2024-12-25T08:00",
+    "category": "Event",
+    "dateCreated": "2025-02-21T11:55:10.876543",
+    "isOpened": false,
+    "isDeleted": false
+  },
+  {
+    "id": 5,
+    "title": "Archived Memory",
+    "message": "This was an important event in my life.",
+    "color": "#9B59B6",
+    "unlockDate": "2024-02-10T14:00",
+    "category": "Reflection",
+    "dateCreated": "2024-01-15T10:00",
+    "isOpened": true,
+    "isDeleted": false
+  },
+  {
+    "id": 6,
+    "title": "Deleted Capsule",
+    "message": "This capsule has been deleted.",
+    "color": "#E74C3C",
+    "unlockDate": "2025-09-10T16:45",
+    "category": "Reminder",
+    "dateCreated": "2025-02-10T19:30:45.543210",
+    "isOpened": false,
+    "isDeleted": true,
+    "deletedAt": "2025-02-18T12:00"
+  },
+  {
+    "id": 7,
+    "title": "mimi",
+    "message": "mimi",
+    "color": "#FFFFFF",
+    "unlockDate": "2025-12-20T00:00",
+    "category": "mimi",
+    "dateCreated": "2025-02-20T18:27:47.423613400",
+    "isOpened": false,
+    "isDeleted": false
+  },
+  {
+    "id": 1,
+    "title": "Title",
+    "message": "Long message",
+    "color": "#FFFFFF",
+    "unlockDate": "2025-02-25T17:00",
+    "category": "Event",
+    "dateCreated": "2025-02-18T12:49:46.988214600",
+    "isOpened": true,
+    "isDeleted": false
+  }
+]

@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"cz.dearfuture.main"},{"l":"cz.dearfuture.models"},{"l":"cz.dearfuture.repositories"},{"l":"cz.dearfuture.services"},{"l":"cz.dearfuture.utils"}];updateSearchResults();
