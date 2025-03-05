@@ -1,6 +1,7 @@
 package cz.dearfuture.utils;
 
 import cz.dearfuture.models.Capsule;
+import cz.dearfuture.models.CapsuleStatus;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,20 +23,21 @@ public class CapsuleFileUtils {
     public static void exportCapsulesToFile(List<Capsule> capsules, String filePath) {
         try (Writer writer = new FileWriter(filePath)) {
             // Write CSV header
-            writer.write("ID,Title,Message,UnlockDate,Category,Color\n");
+            writer.write("ID,Title,Message,UnlockDate,Category,Color,Status\n");
             
             for (Capsule capsule : capsules) {
                 // Use getRawTitle and getRawMessage instead of getTitle and getMessage
                 String encryptedTitle = EncryptionUtil.encrypt(capsule.getRawTitle());
                 String encryptedMessage = EncryptionUtil.encrypt(capsule.getRawMessage());
                 
-                writer.write(String.format("%d,%s,%s,%s,%s,%s\n",
+                writer.write(String.format("%d,%s,%s,%s,%s,%s,%s\n",
                         capsule.getId(),
                         encryptedTitle,
                         encryptedMessage,
                         capsule.getUnlockDate(),
                         capsule.getCategory(),
-                        capsule.getColor()));
+                        capsule.getColor(),
+                        capsule.getStatus()));
             }
             System.out.println(Capsule.GREEN + "Capsules successfully exported to " + filePath + Capsule.RESET);
         } catch (IOException e) {
@@ -64,7 +66,7 @@ public class CapsuleFileUtils {
                 }
                 
                 String[] data = line.split(",");
-                if (data.length >= 6) {
+                if (data.length >= 7) {
                     try {
                         // Decrypt sensitive data from CSV
                         String decryptedTitle = EncryptionUtil.decrypt(data[1]);
@@ -78,6 +80,15 @@ public class CapsuleFileUtils {
                                 data[4],                       // Category
                                 data[5]                        // Color
                         );
+
+                        // Set the status based on imported value
+                        CapsuleStatus status = CapsuleStatus.valueOf(data[6]);
+                        switch (status) {
+                            case OPENED -> capsule.openCapsule();
+                            case DELETED -> capsule.deleteCapsule();
+                            // LOCKED is default state, no action needed
+                        }
+
                         importedCapsules.add(capsule);
                     } catch (Exception e) {
                         System.out.println(Capsule.YELLOW + "Warning: Skipping invalid capsule entry: " + e.getMessage() + Capsule.RESET);
