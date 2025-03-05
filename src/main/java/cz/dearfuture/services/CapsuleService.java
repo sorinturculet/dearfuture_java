@@ -1,6 +1,7 @@
 package cz.dearfuture.services;
 
 import cz.dearfuture.models.Capsule;
+import cz.dearfuture.models.CapsuleStatus;
 import cz.dearfuture.repositories.CapsuleRepository;
 import cz.dearfuture.utils.CapsuleFileUtils;
 import cz.dearfuture.utils.MultiThreadedMergeSort;
@@ -42,20 +43,34 @@ public class CapsuleService {
         return true;
     }
     /**
-     * Generates a unique ID for a new capsule.
+     * Generates a unique ID for a new capsule by finding the first available ID.
+     * This includes checking for gaps in the ID sequence from deleted capsules.
      *
-     * @return The next available ID.
+     * @return The first available ID.
      */
     public int generateUniqueCapsuleId() {
         List<Capsule> allCapsules = repository.getAllCapsules();
-        if (allCapsules.isEmpty()) return 1;
+        if (allCapsules.isEmpty()) {
+            return 1;
+        }
 
-        int maxId = allCapsules.stream()
-                .mapToInt(Capsule::getId)
-                .max()
-                .orElse(0);
+        // Get all existing IDs and sort them
+        List<Integer> existingIds = allCapsules.stream()
+                .map(Capsule::getId)
+                .sorted()
+                .toList();
 
-        return maxId + 2;
+        // Find the first gap in the sequence
+        int expectedId = 1;
+        for (int currentId : existingIds) {
+            if (currentId > expectedId) {
+                return expectedId;
+            }
+            expectedId = currentId + 1;
+        }
+
+        // If no gaps found, return next number after the highest ID
+        return expectedId;
     }
 
     /**
@@ -65,7 +80,7 @@ public class CapsuleService {
      */
     public List<Capsule> getLockedCapsules() {
         return repository.getAllCapsules().stream()
-                .filter(capsule -> !capsule.isOpened()) // Only locked capsules
+                .filter(capsule -> capsule.getStatus() == CapsuleStatus.LOCKED)
                 .toList();
     }
 
@@ -76,7 +91,7 @@ public class CapsuleService {
      */
     public List<Capsule> getArchivedCapsules() {
         return repository.getAllCapsules().stream()
-                .filter(Capsule::isOpened) // Only opened capsules
+                .filter(capsule -> capsule.getStatus() == CapsuleStatus.OPENED)
                 .toList();
     }
 
@@ -141,24 +156,24 @@ public class CapsuleService {
         repository.cleanupOldDeletedCapsules();
     }
     /**
-     * Exports capsules to a file (JSON or CSV format).
+     * Exports capsules to a CSV file.
      *
      * @param filePath The destination file path.
-     * @param format   The format ("json" or "csv").
      */
-    public void exportCapsulesToFile(String filePath, String format) {
+    public void exportCapsulesToFile(String filePath) {
         List<Capsule> capsules = repository.getAllCapsules();
-        CapsuleFileUtils.exportCapsulesToFile(capsules, filePath, format);
+        CapsuleFileUtils.exportCapsulesToFile(capsules, filePath);
     }
 
     /**
-     * Imports capsules from a file (JSON or CSV format).
-     *
-     * @param filePath The source file path.
-     * @param format   The format ("json" or "csv").
+     * Imports capsules from a CSV file, replacing all existing capsules.
      */
-    public void importCapsulesFromFile(String filePath, String format) {
-        List<Capsule> importedCapsules = CapsuleFileUtils.importCapsulesFromFile(filePath, format);
+    public void importCapsulesFromFile(String filePath) {
+        // First, clear all existing capsules
+        repository.clearAllCapsules();
+        
+        // Then import new capsules
+        List<Capsule> importedCapsules = CapsuleFileUtils.importCapsulesFromFile(filePath);
         for (Capsule capsule : importedCapsules) {
             repository.addCapsule(capsule);
         }
@@ -174,9 +189,15 @@ public class CapsuleService {
 
         // 1. Total Capsules Count 🔢
         int totalCapsules = allCapsules.size();
-        int locked = (int) allCapsules.stream().filter(c -> !c.isOpened() && !c.isDeleted()).count();
-        int opened = (int) allCapsules.stream().filter(Capsule::isOpened).count();
-        int deleted = (int) allCapsules.stream().filter(Capsule::isDeleted).count();
+        int locked = (int) allCapsules.stream()
+                .filter(c -> c.getStatus() == CapsuleStatus.LOCKED)
+                .count();
+        int opened = (int) allCapsules.stream()
+                .filter(c -> c.getStatus() == CapsuleStatus.OPENED)
+                .count();
+        int deleted = (int) allCapsules.stream()
+                .filter(c -> c.getStatus() == CapsuleStatus.DELETED)
+                .count();
         stats.put("Total Capsules", String.valueOf(totalCapsules));
         stats.put("Locked Capsules", String.valueOf(locked));
         stats.put("Opened Capsules", String.valueOf(opened));
@@ -184,7 +205,7 @@ public class CapsuleService {
 
         // 2. Most Common Category
         Map<String, Long> categoryCount = allCapsules.stream()
-                .filter(c -> !c.isDeleted())
+                .filter(c -> c.getStatus() != CapsuleStatus.DELETED)
                 .collect(Collectors.groupingBy(Capsule::getCategory, Collectors.counting()));
         String mostCommonCategory = categoryCount.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
@@ -195,7 +216,7 @@ public class CapsuleService {
 
         // 3. Most Used Capsule Color
         Map<String, Long> colorCount = allCapsules.stream()
-                .filter(c -> !c.isDeleted())
+                .filter(c -> c.getStatus() != CapsuleStatus.DELETED)
                 .collect(Collectors.groupingBy(Capsule::getColor, Collectors.counting()));
         String mostUsedColor = colorCount.entrySet().stream()
                 .max(Map.Entry.comparingByValue())

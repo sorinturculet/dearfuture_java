@@ -60,10 +60,10 @@ class CapsuleRepositoryTest {
         repository.addCapsule(capsule);
         repository.deleteCapsule(3);
 
-        List<Capsule> activeCapsules = repository.getAllCapsules();
+        List<Capsule> allCapsules = repository.getAllCapsules();
         List<Capsule> deletedCapsules = repository.getDeletedCapsules();
 
-        assertEquals(0, activeCapsules.size(), "Deleted capsule should not be in active list.");
+        assertEquals(1, allCapsules.size(), "Deleted capsule can be in all capsules.");
         assertEquals(1, deletedCapsules.size(), "Deleted capsule should be in trash.");
         assertTrue(deletedCapsules.get(0).isDeleted(), "Deleted capsule should be marked as deleted.");
     }

@@ -24,8 +24,7 @@ public class Capsule {
     private LocalDateTime unlockDate;
     private String category;
     private LocalDateTime dateCreated;
-    private boolean isOpened;
-    private boolean isDeleted;
+    private CapsuleStatus status;
     private LocalDateTime deletedAt;
 
     /**
@@ -37,7 +36,7 @@ public class Capsule {
      * @param unlockDate The date and time when the capsule can be opened.
      * @param category   Category of the capsule (e.g., Reminder, Reflection, Event).
      */
-    public Capsule(int id, String title, String message, LocalDateTime unlockDate, String category,String color) {
+    public Capsule(int id, String title, String message, LocalDateTime unlockDate, String category, String color) {
         this.id = id;
         this.title = title;
         this.message = message;
@@ -45,8 +44,7 @@ public class Capsule {
         this.category = category;
         this.dateCreated = LocalDateTime.now();
         this.color = color;
-        this.isOpened = false;
-        this.isDeleted = false;
+        this.status = CapsuleStatus.LOCKED;
         this.deletedAt = null;
     }
 
@@ -60,7 +58,7 @@ public class Capsule {
      * @return The message stored inside the capsule if it is opened.
      * Otherwise, returns a locked message.
      */
-    public String getMessage() { return isOpened ? message : "This capsule is locked!"; }
+    public String getMessage() { return isOpened() ? message : "This capsule is locked!"; }
 
     /** @return The color of the capsule. */
     public String getColor() { return color; }
@@ -74,11 +72,14 @@ public class Capsule {
     /** @return The date when the capsule was created. */
     public LocalDateTime getDateCreated() { return dateCreated; }
 
+    /** @return The status of the capsule. */
+    public CapsuleStatus getStatus() { return status; }
+
     /** @return {@code true} if the capsule has been opened, otherwise {@code false}. */
-    public boolean isOpened() { return isOpened; }
+    public boolean isOpened() { return status == CapsuleStatus.OPENED; }
 
     /** @return {@code true} if the capsule has been deleted (moved to Trash), otherwise {@code false}. */
-    public boolean isDeleted() { return isDeleted; }
+    public boolean isDeleted() { return status == CapsuleStatus.DELETED; }
 
     /** @return The timestamp when the capsule was deleted, or {@code null} if not deleted. */
     public LocalDateTime getDeletedAt() { return deletedAt; }
@@ -98,9 +99,6 @@ public class Capsule {
     /** @param category Sets the category of the capsule. */
     public void setCategory(String category) { this.category = category; }
 
-    /** @param opened Sets whether the capsule is opened. */
-    public void setOpened(boolean opened) { this.isOpened = opened; }
-
     /**
      * Checks if the capsule is unlocked based on the current date and time.
      *
@@ -117,7 +115,7 @@ public class Capsule {
      */
     public boolean openCapsule() {
         if (isUnlocked()) {
-            isOpened = true;
+            status = CapsuleStatus.OPENED;
             return true;
         }
         return false;
@@ -125,14 +123,24 @@ public class Capsule {
 
     /** Moves the capsule to the Trash (soft delete). */
     public void deleteCapsule() {
-        isDeleted = true;
+        status = CapsuleStatus.DELETED;
         deletedAt = LocalDateTime.now();
     }
 
     /** Restores the capsule from the Trash. */
     public void restoreCapsule() {
-        isDeleted = false;
+        status = isOpened() ? CapsuleStatus.OPENED : CapsuleStatus.LOCKED;
         deletedAt = null;
+    }
+
+    /** @return The raw message regardless of capsule status (for export/backup purposes) */
+    public String getRawMessage() { 
+        return message; 
+    }
+
+    /** @return The raw title (for export/backup purposes) */
+    public String getRawTitle() { 
+        return title; 
     }
 
     /**
@@ -145,7 +153,11 @@ public class Capsule {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         // Determine status color
-        String statusColor = isDeleted ? RED : (isOpened ? GREEN : YELLOW);
+        String statusColor = switch (status) {
+            case DELETED -> RED;
+            case OPENED -> GREEN;
+            case LOCKED -> YELLOW;
+        };
 
         // Determine capsule title color (based on predefined colors)
         String capsuleColor = switch (color.toUpperCase()) {
@@ -173,13 +185,13 @@ public class Capsule {
             """,
                 statusColor, id, RESET, // ID Color
                 capsuleColor, title, RESET, // Title in Capsule's Color
-                isOpened ? GREEN : YELLOW, isOpened ? message : "This capsule is locked!", RESET, // Message Color
+                isOpened() ? GREEN : YELLOW, isOpened() ? message : "This capsule is locked!", RESET, // Message Color
                 color, // Hex Color Code
                 unlockDate.format(formatter),
                 category,
                 dateCreated.format(formatter),
-                statusColor, isOpened ? "Opened" : "Locked", RESET, // Status Color
-                isDeleted ? RED + "Yes (Deleted at: " + (deletedAt != null ? deletedAt.format(formatter) : "Unknown") + ")" + RESET : "No"
+                statusColor, isOpened() ? "Opened" : "Locked", RESET, // Status Color
+                isDeleted() ? RED + "Yes (Deleted at: " + (deletedAt != null ? deletedAt.format(formatter) : "Unknown") + ")" + RESET : "No"
         );
     }
 

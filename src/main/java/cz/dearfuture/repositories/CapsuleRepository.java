@@ -2,6 +2,7 @@ package cz.dearfuture.repositories;
 
 import com.google.gson.*;
 import cz.dearfuture.models.Capsule;
+import cz.dearfuture.models.CapsuleStatus;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -69,7 +70,6 @@ public class CapsuleRepository {
      */
     public List<Capsule> getAllCapsules() {
         return capsules.stream()
-                .filter(capsule -> !capsule.isDeleted())
                 .toList();
     }
 
@@ -81,7 +81,7 @@ public class CapsuleRepository {
      */
     public Capsule getCapsuleById(int id) {
         return capsules.stream()
-                .filter(capsule -> capsule.getId() == id && !capsule.isDeleted())
+                .filter(capsule -> capsule.getId() == id && capsule.getStatus() != CapsuleStatus.DELETED)
                 .findFirst()
                 .orElse(null);
     }
@@ -143,7 +143,7 @@ public class CapsuleRepository {
      */
     public List<Capsule> getDeletedCapsules() {
         return capsules.stream()
-                .filter(Capsule::isDeleted)
+                .filter(capsule -> capsule.getStatus() == CapsuleStatus.DELETED)
                 .toList();
     }
 
@@ -152,8 +152,43 @@ public class CapsuleRepository {
      */
     public void cleanupOldDeletedCapsules() {
         LocalDateTime threshold = LocalDateTime.now().minusDays(15);
-        capsules.removeIf(capsule -> capsule.isDeleted() && capsule.getDeletedAt().isBefore(threshold));
+        capsules.removeIf(capsule -> capsule.getStatus() == CapsuleStatus.DELETED && capsule.getDeletedAt().isBefore(threshold));
         saveCapsulesToFile();
+    }
+
+    /**
+     * Checks if a capsule with the same title and message already exists.
+     *
+     * @param title The title to check
+     * @param message The message to check
+     * @return true if a similar capsule exists, false otherwise
+     */
+    public boolean doesSimilarCapsuleExist(String title, String message) {
+        return capsules.stream()
+                .filter(capsule -> capsule.getStatus() != CapsuleStatus.DELETED)
+                .anyMatch(capsule -> 
+                    capsule.getTitle().equalsIgnoreCase(title.trim()) &&
+                    capsule.getMessage().equalsIgnoreCase(message.trim())
+                );
+    }
+
+    /**
+     * Retrieves all archived (opened) capsules.
+     *
+     * @return A list of opened capsules that are not deleted.
+     */
+    public List<Capsule> getArchivedCapsules() {
+        return capsules.stream()
+                .filter(capsule -> capsule.getStatus() == CapsuleStatus.OPENED)
+                .toList();
+    }
+
+    /**
+     * Removes all capsules from the repository.
+     */
+    public void clearAllCapsules() {
+        capsules.clear();
+        saveCapsulesToFile();  // Save the empty state to file
     }
 }
 

@@ -102,6 +102,11 @@ public class DearFutureApp {
             return;
         }
 
+        // Check if the unlock date is in the past
+        if (unlockDate.isBefore(LocalDateTime.now())) {
+            System.out.println("⚠️ Warning: You are creating a capsule with a date in the past!");
+        }
+
         //  Select a capsule color
         String color = selectCapsuleColor();
 
@@ -109,9 +114,9 @@ public class DearFutureApp {
 
         Capsule capsule = new Capsule(capsuleId, title, message, unlockDate, category, color);
         if (service.addCapsule(capsule)) {
-            System.out.println(color + "Capsule created successfully!" + Capsule.RESET);
+            System.out.println("Capsule created successfully!" );
         } else {
-            System.out.println(Capsule.RED + "Failed to create capsule. Ensure fields are not empty." + Capsule.RESET);
+            System.out.println( "Failed to create capsule. Ensure fields are not empty.");
         }
     }
 
@@ -189,17 +194,19 @@ public class DearFutureApp {
     private static void paginateCapsules(List<Capsule> capsules) {
         int page = 0;
         int pageSize = 3;
+        int totalPages = (int) Math.ceil((double) capsules.size() / pageSize);
 
         while (true) {
             int start = page * pageSize;
             int end = Math.min(start + pageSize, capsules.size());
 
-            System.out.println("\n" + Capsule.CYAN + "=== Page " + (page + 1) + " ===" + Capsule.RESET);
+            System.out.println("\n" + Capsule.CYAN + "=== Page " + (page + 1) + " of " + totalPages + " ===" + Capsule.RESET);
             for (int i = start; i < end; i++) {
                 System.out.println(capsules.get(i));
             }
 
-            System.out.println("\nN - Next Page | P - Previous Page | Q - Quit");
+            System.out.println("\nN - Next Page | P - Previous Page | Q - Quit" + 
+                             " (Page " + (page + 1) + "/" + totalPages + ")");
             System.out.print("Choose an option: ");
             String choice = scanner.nextLine().trim().toLowerCase();
 
@@ -260,39 +267,33 @@ public class DearFutureApp {
         }
     }
     /**
-     * Allows the user to export capsules to a file.
+     * Allows the user to export capsules to a CSV file.
      */
     private static void exportCapsules() {
         System.out.println("\n" + Capsule.CYAN + "=== Export Capsules ===" + Capsule.RESET);
-        System.out.print("Enter file path (e.g., data/export.json or data/export.csv): ");
+        System.out.print("Enter file path (e.g., data/export.csv): ");
         String filePath = scanner.nextLine().trim();
-        System.out.print("Choose format (json/csv): ");
-        String format = scanner.nextLine().trim().toLowerCase();
 
-        if (!format.equals("json") && !format.equals("csv")) {
-            System.out.println(Capsule.RED + "Invalid format! Please choose 'json' or 'csv'." + Capsule.RESET);
-            return;
+        if (!filePath.toLowerCase().endsWith(".csv")) {
+            filePath += ".csv";
         }
 
-        service.exportCapsulesToFile(filePath, format);
+        service.exportCapsulesToFile(filePath);
     }
     /**
-     * Allows the user to import capsules from a file.
+     * Allows the user to import capsules from a CSV file.
      */
     private static void importCapsules() {
         System.out.println("\n" + Capsule.CYAN + "=== Import Capsules ===" + Capsule.RESET);
-        System.out.print("Enter file path to import from (e.g., data/export.json or data/export.csv): ");
+        System.out.print("Enter file path to import from (e.g., data/export.csv): ");
         String filePath = scanner.nextLine().trim();
 
-        System.out.print("Choose format (json/csv): ");
-        String format = scanner.nextLine().trim().toLowerCase();
-
-        if (!format.equals("json") && !format.equals("csv")) {
-            System.out.println(Capsule.RED + "Invalid format! Please choose 'json' or 'csv'." + Capsule.RESET);
+        if (!filePath.toLowerCase().endsWith(".csv")) {
+            System.out.println(Capsule.RED + "Invalid file format! Please use a .csv file." + Capsule.RESET);
             return;
         }
 
-        service.importCapsulesFromFile(filePath, format);
+        service.importCapsulesFromFile(filePath);
     }
     /**
      * Displays capsule statistics and insights.
